@@ -1,13 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from compileGIF import compile
+import os
 
-def initialize_lattice(N):
+def initializeRandom(N):
     lattice = np.random.choice([1, -1], size=(N, N))
     return lattice
 
+def initializeUp(N):
+    lattice = np.full((N, N), 1)
+    return lattice
+
+def initializeDown(N):
+    lattice = np.full((N, N), -1)
+    return lattice
+
 def compute_energy(lattice, J=1.0, H=0.0):
-    
     N = lattice.shape[0]
     energy = 0.0
     for i in range(N):
@@ -21,7 +30,7 @@ def compute_energy(lattice, J=1.0, H=0.0):
 
 def metropolis_step(lattice, T, J=1.0, H=0.0):
     N = lattice.shape[0]
-    for _ in range(N * N):  # single sweep
+    for _ in range(int(N*N/2)):  # single sweep
         i = np.random.randint(0, N)
         j = np.random.randint(0, N)
         spin = lattice[i, j]
@@ -32,7 +41,7 @@ def metropolis_step(lattice, T, J=1.0, H=0.0):
             lattice[i, j] = -spin  # Accepted!
     return lattice
 
-def metroStep(lattice, T, steps, J=1.0, H=0.1):
+def nextFrame(lattice, T, steps, J=1.0, H=0.0):
     print(f"TEMP {T}")
     for step in range(steps):
         lattice = metropolis_step(lattice, T, J, H)
@@ -43,34 +52,64 @@ def metroStep(lattice, T, steps, J=1.0, H=0.1):
         # if step % (10) == 0:
             # print(f"TEMP {T}, Step {step}: E = {E:.2f}, M = {M}")
             # print(f"TEMP {T}, Step {step}")
-    
-
     return lattice
 
+# O(N^2*frames*stepsPerFrame)
+# lattice size, [start, end), frames, number of metropolis steps per frame, whether to delete the individual .pngs after
+def makeGIFOverT(N, startT, endT, frames, stepsPerframe, fps, deleteFiles, J=1.0, H=0.0):
 
-N = 50     # Lattice size (NxN)
-T = 1.0
-steps = 70       
-startT = 1.5
-endT = 4.0
-tot = 200
+    temperatures = [((i+1)*(endT-startT)/frames + startT) for i in range(frames)]
 
-temperatures = [((i)*(endT-startT)/tot + startT) for i in range(tot+1)]
+    lattice = initializeRandom(N)
+    lattice = nextFrame(lattice, startT, 500, J, H)
 
-# lattices, energies, magnetizations = simulate_ising(N, temperatures, steps)
+    dir = '/Users/nick/Documents/Code/PythonCode2/IsingModel/picsOverT/'
+    if not os.path.exists(dir):
+        os.makedirs(dir)
 
-# fig, axes = plt.subplots(4, 10)
-# axes = axes.flatten()
+    for i, T in enumerate(temperatures):
+        lattice = nextFrame(lattice, T, stepsPerframe)
+        plt.figure(figsize=(5, 5))
+        plt.imshow(lattice, cmap='coolwarm', interpolation='nearest')
+        plt.title(f"Ising Model with Temperature {startT:.2f}-{endT:.2f} Field {H:.2f}")
+        plt.axis('off')
+        plt.savefig(f"{dir}/frame_{i}.png", bbox_inches='tight')
+        plt.close()
+    
+    compile(dir, fps, deleteFiles)
 
-lattice = initialize_lattice(N)
-# lattice = metroStep(lattice, temperatures[0], 500)
+def makeGIFOverMetro(N, T, frames, stepsPerFrame, fps, deleteFiles, J=1.0, H=0.0):
+    
+    lattice = initializeDown(N)
+    dir = '/Users/nick/Documents/Code/PythonCode2/IsingModel/picsOverMetro/'
+    if not os.path.exists(dir):
+        os.makedirs(dir)
 
-for i, T in enumerate(temperatures):
-    lattice = metroStep(lattice, T, steps)
-    plt.figure(figsize=(5, 5))
-    plt.imshow(lattice, cmap='coolwarm', interpolation='nearest')
-    plt.title(f"Temperature {T}")
-    plt.axis('off')
-    plt.savefig(f"pics/frame_{i}.png", bbox_inches='tight')
-    plt.close()
+    for i in range(frames):
+        lattice = nextFrame(lattice, T, stepsPerFrame, J, H)
+        plt.figure(figsize=(5, 5))
+        plt.imshow(lattice, cmap='coolwarm', interpolation='nearest')
+        plt.title(f"Ising Model with Temperature {T:.2f} and Field {H:.2f}; starting down")
+        plt.axis('off')
+        plt.savefig(f"{dir}/frame_{i}.png", bbox_inches='tight')
+        plt.close()
+    
+    compile(dir, fps, deleteFiles)
 
+def main():
+    # n = 100
+    # startT = 1.0
+    # endT = 4.0
+    # frames = 100
+    # stepsPerFrame = 1
+    # fps = 20
+    # makeGIFOverT(n, startT, endT, frames, stepsPerFrame, fps, True, 1.0, 0)
+    n = 256
+    t = 1.5
+    frames = 80
+    stepsPerFrame = 1
+    fps = 20
+    makeGIFOverMetro(n, t, frames, stepsPerFrame, fps, True, 1.0, 1.0)
+
+if __name__ == "__main__":
+    main()

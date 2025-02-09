@@ -1,19 +1,21 @@
-import imageio
+import imageio.v2 as imageio
 import os
 
+def compile(dir, fps, deleteAfter):
+    # dir = "/Users/nick/Documents/Code/PythonCode2/IsingModel/pics/"
+    totalFrames = len([f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))])
+    print(totalFrames)
+    filenames = [f"{dir}/frame_{i}.png" for i in range(totalFrames)]
 
-dir = "/Users/nick/Documents/Code/PythonCode2/IsingModel/pics/"
+    images = []
+    for filename in filenames:
+        images.append(imageio.imread(filename))
 
-totalFrames = len([f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))])
-filenames = [f"pics/frame_{i}.png" for i in range(totalFrames)]
+    imageio.mimsave("Ising.gif", images, format='GIF', fps=fps)
 
-# for filename in filenames:
-#     os.remove(filename)
-# quit()
+    if deleteAfter:
+        for filename in filenames:
+            os.remove(filename)
+        print(f"Deleted files in {dir}")
 
-images = []
-for filename in filenames:
-    images.append(imageio.imread(filename))
-
-imageio.mimsave("Ising.gif", images, fps=200)
 

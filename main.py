@@ -30,7 +30,7 @@ def compute_energy(lattice, J=1.0, H=0.0):
 
 def metropolis_step(lattice, T, J=1.0, H=0.0):
     N = lattice.shape[0]
-    for _ in range(int(N*N/2)):  # single sweep
+    for _ in range(int(N*N/7)):  # single sweep
         i = np.random.randint(0, N)
         j = np.random.randint(0, N)
         spin = lattice[i, j]
@@ -81,11 +81,13 @@ def makeGIFOverT(N, startT, endT, frames, stepsPerframe, fps, deleteFiles, J=1.0
 def makeGIFOverMetro(N, T, frames, stepsPerFrame, fps, deleteFiles, J=1.0, H=0.0):
     
     lattice = initializeDown(N)
+    # lattice = initializeRandom(N)
     dir = '/Users/nick/Documents/Code/PythonCode2/IsingModel/picsOverMetro/'
     if not os.path.exists(dir):
         os.makedirs(dir)
 
     for i in range(frames):
+        print(i)
         lattice = nextFrame(lattice, T, stepsPerFrame, J, H)
         plt.figure(figsize=(5, 5))
         plt.imshow(lattice, cmap='coolwarm', interpolation='nearest')
@@ -104,12 +106,12 @@ def main():
     # stepsPerFrame = 1
     # fps = 20
     # makeGIFOverT(n, startT, endT, frames, stepsPerFrame, fps, True, 1.0, 0)
-    n = 256
-    t = 1.5
-    frames = 80
+    n = 512
+    t = 1.7
+    frames = 500
     stepsPerFrame = 1
-    fps = 20
-    makeGIFOverMetro(n, t, frames, stepsPerFrame, fps, True, 1.0, 1.0)
+    fps = 49
+    makeGIFOverMetro(n, t, frames, stepsPerFrame, fps, True, 1.0, 0.5)
 
 if __name__ == "__main__":
     main()
